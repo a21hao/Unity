@@ -4,6 +4,7 @@ using TMPro;
 using System.Collections.Generic;
 using System;
 using System.Text;
+using UnityEngine.UI;
 
 public class Connection : MonoBehaviour
 {
@@ -11,11 +12,12 @@ public class Connection : MonoBehaviour
     private string serverUrl = "ws://localhost:3000";
     [SerializeField] private TMP_InputField usernameInput;
     [SerializeField] private TMP_InputField messageInput;
-    [SerializeField] private TextMeshProUGUI chatText;
+    [SerializeField] private GameObject chatTextPrefab;
     [SerializeField] private GameObject usernamePanel;
     [SerializeField] private GameObject sendMessageButton;
     [SerializeField] private GameObject connectButton;
-    public Transform content;
+    [SerializeField] private Transform content;
+    [SerializeField] private ScrollRect scrollRect;
 
     private string username;
     private bool usernameSent = false;
@@ -34,15 +36,13 @@ public class Connection : MonoBehaviour
         }
     }   
 
-
     void Start()
     {
         ConnectToServer();
-        // Asignar una función al evento "onEndEdit" para detectar cuando se termina de editar el campo de nombre de usuario
         usernameInput.onEndEdit.AddListener(delegate { SendUsername(); });
-        // Agregar el Listener para detectar cuando se presiona Enter en el campo de texto del mensaje
         messageInput.onSubmit.AddListener(delegate { SendMessageToServer(); });
     }
+
     void Update()
     {
         if (newMessage)
@@ -51,6 +51,7 @@ public class Connection : MonoBehaviour
             newMessage = false;
         }
     }
+
     private void ConnectToServer()
     {
         ws = new WebSocket(serverUrl);
@@ -71,7 +72,6 @@ public class Connection : MonoBehaviour
     {
         Debug.Log("Received raw message: " + e.Data);
 
-        // Check if the message is not an empty JSON object
         if (e.Data.Trim() == "{}")
         {
             Debug.LogError("Received an empty JSON object. Ignoring.");
@@ -81,8 +81,6 @@ public class Connection : MonoBehaviour
         try
         {
             var parsedMessage = JsonUtility.FromJson<Message>(e.Data);
-            //Debug.Log("Parsed message: " + parsedMessage);
-
             receivedMessages.Enqueue(parsedMessage.ToString());
         }
         catch (Exception ex)
@@ -92,33 +90,27 @@ public class Connection : MonoBehaviour
         newMessage = true;
     }
 
-
-
     private void CheckMessageQueue()
     {
-        // Clear the current text before displaying messages
-        foreach (Transform child in content)
-        {
-            Destroy(child.gameObject);
-        }
-
         // Display messages
         foreach (string message in receivedMessages)
         {
-            GameObject newText = Instantiate(textPrefab, content);
+            GameObject newText = Instantiate(chatTextPrefab, content);
             newText.GetComponent<TextMeshProUGUI>().text = message;
         }
+
+        // Clear the queue after displaying messages
+        receivedMessages.Clear();
+
+        // Scroll to the bottom of the ScrollView to show the latest message
+        scrollRect.verticalNormalizedPosition = 0f;
     }
-
-
-
 
     private void OnDisconnected(object sender, CloseEventArgs e)
     {
         Debug.Log("Disconnected from server");
         if (usernamePanel != null)
         {
-            Debug.Log("klk");
             usernamePanel.SetActive(true);
         }
         usernameSent = false;
@@ -135,17 +127,15 @@ public class Connection : MonoBehaviour
                 username = "Anonymous";
             }
 
-            // Format the JSON message for the username
             string jsonUsername = "{\"username\": \"" + username + "\"}";
             ws.Send(jsonUsername);
 
-            // Disable the username panel
             if (usernamePanel != null)
             {
                 usernamePanel.SetActive(false);
             }
 
-            usernameSent = true; // Mark that the username has been sent
+            usernameSent = true;
         }
     }
 
@@ -156,7 +146,6 @@ public class Connection : MonoBehaviour
             string message = messageInput.text;
             if (!string.IsNullOrEmpty(message) && ws != null && ws.ReadyState == WebSocketState.Open)
             {
-                // Format the JSON message for the chat message including the username
                 var messageObject = new
                 {
                     username = username,
@@ -164,16 +153,11 @@ public class Connection : MonoBehaviour
                 };
 
                 string jsonMessage = "{\"username\": \"" + username + "\", \"message\": \"" + messageObject.message + "\"}";
-                //string jsonMessage = JsonUtility.ToJson(messageObject);
-                Debug.Log("Sending message to server: " + jsonMessage);
                 ws.Send(jsonMessage);
                 messageInput.text = string.Empty;
             }
         }
     }
-
-
-
 
     public void DisconnectFromServer()
     {
