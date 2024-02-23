@@ -119,7 +119,7 @@ public class Connection : MonoBehaviour
 
     public void SendUsername()
     {
-        if (!usernameSent)
+        if (!usernameSent && !string.IsNullOrEmpty(usernameInput.text))
         {
             username = usernameInput.text;
             if (string.IsNullOrEmpty(username))

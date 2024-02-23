@@ -1,26 +1,23 @@
 using UnityEngine;
-using TMPro;
-using UnityEngine.UI;
 
 public class Juego : MonoBehaviour
 {
     public GameObject imagePrefab;
+    public GameObject specialPrefab;
     public Transform[] spawnPoints;
-    //public TextMeshProUGUI scoreText;
+    public float specialSpawnProbability = 0.01f;
 
     void Start()
     {
         Spawn();
     }
 
-    void Update()
-    {
-        
-    }
-
     public void Spawn()
     {
-        GameObject imagen = Instantiate(imagePrefab) as GameObject;
-        imagen.transform.position = spawnPoints[Random.Range(0, spawnPoints.Length)].transform.position;
+        float rand = Random.value;
+
+        GameObject prefabToSpawn = rand < specialSpawnProbability ? specialPrefab : imagePrefab;
+
+        GameObject imagen = Instantiate(prefabToSpawn, spawnPoints[Random.Range(0, spawnPoints.Length)].position, Quaternion.identity);
     }
 }
