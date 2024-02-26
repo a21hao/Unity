@@ -20,7 +20,7 @@ public class Connection : MonoBehaviour
     [SerializeField] private ScrollRect scrollRect;
 
     private string username;
-    private bool usernameSent = false;
+    public bool usernameSent = false;
     private Queue<string> receivedMessages = new Queue<string>();
     private bool newMessage = false;
 
