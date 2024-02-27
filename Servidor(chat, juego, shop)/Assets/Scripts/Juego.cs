@@ -10,6 +10,8 @@ public class Juego : MonoBehaviour
     public float gameTime;
     public TextMeshProUGUI gameText;
 
+    [SerializeField] private GameObject botonPlay;
+    [SerializeField] private GameObject scoreRanking;
     private bool spawningStarted = false;
     private GameObject currentSpawnedObject;
 
@@ -29,6 +31,9 @@ public class Juego : MonoBehaviour
             else
             {
                 spawningStarted = false;
+                botonPlay.SetActive(true);
+                FindObjectOfType<ControladorDeJuego>().EndGame();
+                scoreRanking.SetActive(true);
             }
 
             gameText.text = Mathf.CeilToInt(gameTime).ToString();
@@ -38,7 +43,8 @@ public class Juego : MonoBehaviour
     public void StartSpawning()
     {
         spawningStarted = true; 
-        gameTime = 60f; 
+        gameTime = 5f;
+        botonPlay.SetActive(false);
     }
 
     public void Spawn()

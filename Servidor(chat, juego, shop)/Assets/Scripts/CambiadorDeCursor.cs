@@ -10,7 +10,7 @@ public class CambiadorDeCursor : MonoBehaviour
         public Texture2D cursorTexture;
         public Vector2 hotSpot;
         public int basePrice;
-        public int extraPoints;
+        public int cursorIndex; // Nuevo campo para indicar el índice del cursor
     }
 
     public CursorButton[] cursorButtons;
@@ -32,10 +32,11 @@ public class CambiadorDeCursor : MonoBehaviour
     {
         if (index >= 0 && index < cursorButtons.Length)
         {
-            int totalPrice = cursorButtons[index].basePrice + cursorButtons[index].extraPoints; // Calcular el precio total
+            int totalPrice = cursorButtons[index].basePrice; // Calcular el precio total
             if (scoreManager != null && scoreManager.score >= totalPrice)
             {
                 Cursor.SetCursor(cursorButtons[index].cursorTexture, cursorButtons[index].hotSpot, CursorMode.Auto);
+                scoreManager.ChangeCursorType(cursorButtons[index].cursorIndex); // Llamar al método para cambiar el tipo de cursor
                 scoreManager.SubtractPoints(totalPrice); // Restar el precio total
             }
             else
