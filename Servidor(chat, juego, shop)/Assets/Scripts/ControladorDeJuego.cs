@@ -4,7 +4,7 @@ using TMPro;
 public class ControladorDeJuego : MonoBehaviour
 {
     public TextMeshProUGUI scoreText;
-    private int score;
+    public int score = 1000;
     private int pointsPerNormalObject = 1;
     private int pointsPerSpecialObject = 10;
 
@@ -41,5 +41,16 @@ public class ControladorDeJuego : MonoBehaviour
                 spawneador.Spawn();
             }
         }
+    }
+
+    public void SubtractPoints(int points)
+    {
+        score -= points;
+        UpdateScoreText();
+    }
+
+    public void UpdateScoreText()
+    {
+        scoreText.text = score.ToString();
     }
 }
