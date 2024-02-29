@@ -9,7 +9,7 @@ using UnityEngine.UI;
 public class Connection : MonoBehaviour
 {
     private WebSocket ws;
-    private string serverUrl = "ws://localhost:3000";
+    private string serverUrl = "ws://localhost:3001";
     [SerializeField] private TMP_InputField usernameInput;
     [SerializeField] private TMP_InputField messageInput;
     [SerializeField] private GameObject chatTextPrefab;
@@ -65,7 +65,7 @@ public class Connection : MonoBehaviour
 
     private void OnConnected(object sender, System.EventArgs e)
     {
-        Debug.Log("Connected to server");
+        Debug.Log("Connected to chat server");
     }
 
     private void OnMessageReceived(object sender, MessageEventArgs e)
@@ -92,17 +92,14 @@ public class Connection : MonoBehaviour
 
     private void CheckMessageQueue()
     {
-        // Display messages
         foreach (string message in receivedMessages)
         {
             GameObject newText = Instantiate(chatTextPrefab, content);
             newText.GetComponent<TextMeshProUGUI>().text = message;
         }
 
-        // Clear the queue after displaying messages
         receivedMessages.Clear();
 
-        // Scroll to the bottom of the ScrollView to show the latest message
         scrollRect.verticalNormalizedPosition = 0f;
     }
 

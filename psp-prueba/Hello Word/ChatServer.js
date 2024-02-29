@@ -1,10 +1,6 @@
 const WebSocket = require('ws');
-const http = require('http');
-const express = require('express');
 
-const app = express();
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+const wss = new WebSocket.Server({ noServer: true });
 
 // Store connected clients
 const clients = new Set();
@@ -38,8 +34,15 @@ wss.on('connection', (ws) => {
     });
 });
 
-// Start the server
-const PORT = process.env.PORT || 3000;
+// Handle upgrade for WebSocket
+const server = require('http').createServer();
+server.on('upgrade', (request, socket, head) => {
+    wss.handleUpgrade(request, socket, head, (ws) => {
+        wss.emit('connection', ws, request);
+    });
+});
+
+const PORT = 3001;
 server.listen(PORT, () => {
-    console.log(`Server listening on port ${PORT}`);
+    console.log(`Child WebSocket server running on port ${PORT}`);
 });
