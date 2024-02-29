@@ -2,7 +2,6 @@ const WebSocket = require('ws');
 
 const wss = new WebSocket.Server({ noServer: true });
 
-// Store connected clients
 const clients = new Set();
 
 wss.on('connection', (ws) => {
@@ -16,7 +15,6 @@ wss.on('connection', (ws) => {
             const parsedMessage = JSON.parse(message);
             console.log("Parsed message:", parsedMessage);
     
-            // Broadcast the received message to all clients
             wss.clients.forEach((client) => {
                 if (client.readyState === WebSocket.OPEN) {
                     console.log("Broadcasting message:", parsedMessage);
@@ -34,7 +32,6 @@ wss.on('connection', (ws) => {
     });
 });
 
-// Handle upgrade for WebSocket
 const server = require('http').createServer();
 server.on('upgrade', (request, socket, head) => {
     wss.handleUpgrade(request, socket, head, (ws) => {

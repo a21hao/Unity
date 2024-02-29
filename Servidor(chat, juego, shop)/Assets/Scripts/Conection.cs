@@ -42,6 +42,7 @@ public class Connection : MonoBehaviour
         ConnectToServer();
         usernameInput.onEndEdit.AddListener(delegate { SendUsername(); });
         messageInput.onSubmit.AddListener(delegate { SendMessageToServer(); });
+        admin.SetActive(false);
     }
 
     void Update()

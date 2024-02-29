@@ -1,48 +1,40 @@
 const WebSocket = require('ws');
 
-const wss = new WebSocket.Server({ noServer: true });
+const wss = new WebSocket.Server({ port: 3003 });
 
-// Store connected clients
-const clients = new Set();
+let cursorIndex = 0; // Estado inicial del cursor
 
-wss.on('connection', (ws) => {
-    clients.add(ws);
-    console.log('Client connected');
+function sendCursorIndexToClients() {
+  const data = JSON.stringify({ cursorIndex: cursorIndex });
+  wss.clients.forEach(function each(client) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(data);
+    }
+  });
+}
 
-    ws.on('message', (message) => {
-        console.log("Received raw message:", message);
-    
-        try {
-            const parsedMessage = JSON.parse(message);
-            console.log("Parsed message:", parsedMessage);
-    
-            // Broadcast the received message to all clients
-            wss.clients.forEach((client) => {
-                if (client.readyState === WebSocket.OPEN) {
-                    console.log("Broadcasting message:", parsedMessage);
-                    client.send(JSON.stringify(parsedMessage));
-                }
-            });
-        } catch (error) {
-            console.error("Error parsing message:", error);
-        }
-    });
-    
-    ws.on('close', () => {
-        clients.delete(ws);
-        console.log('Client disconnected');
-    });
+wss.on('connection', function connection(ws) {
+  console.log('Client connected');
+
+  sendCursorIndexToClients();
+
+  ws.on('message', function incoming(message) {
+    console.log('Received message from a client: %s', message);
+
+    try {
+      const parsedMessage = JSON.parse(message);
+      if (parsedMessage.hasOwnProperty('cursorIndex')) {
+        cursorIndex = parsedMessage.cursorIndex;
+        sendCursorIndexToClients();
+      }
+    } catch (error) {
+      console.error('Error parsing message:', error);
+    }
+  });
+
+  ws.on('close', function close() {
+    console.log('Client disconnected');
+  });
 });
 
-// Handle upgrade for WebSocket
-const server = require('http').createServer();
-server.on('upgrade', (request, socket, head) => {
-    wss.handleUpgrade(request, socket, head, (ws) => {
-        wss.emit('connection', ws, request);
-    });
-});
-
-const PORT = 3003;
-server.listen(PORT, () => {
-    console.log(`Child WebSocket server running on port ${PORT}`);
-});
+console.log('WebSocket server running on port 3003');
