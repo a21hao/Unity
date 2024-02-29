@@ -12,12 +12,16 @@ public class ControladorDeJuego : MonoBehaviour
 
     public List<TextMeshProUGUI> scoreText;
     public int score;
+
     private int pointsPerNormalObject = 1;
     private int pointsPerSpecialObject = 10;
 
     private Juego spawneador;
     private bool gameEnded = false;
     [SerializeField] TMP_InputField usernameInputField;
+    private Queue<string> messageQueue = new Queue<string>();
+    public GameObject messagePrefab;
+    public Transform messageParent;
 
     void Start()
     {
@@ -55,6 +59,18 @@ public class ControladorDeJuego : MonoBehaviour
                 }
             }
         }
+        if (messageQueue.Count > 0)
+        {
+            string message = messageQueue.Dequeue();
+            InstantiateMessage(message);
+        }
+    }
+
+    private void InstantiateMessage(string message)
+    {
+        GameObject messageInstance = Instantiate(messagePrefab, messageParent);
+        TextMeshProUGUI messageText = messageInstance.GetComponentInChildren<TextMeshProUGUI>();
+        messageText.text = message;
     }
 
     public void SubtractPoints(int points)
@@ -84,16 +100,14 @@ public class ControladorDeJuego : MonoBehaviour
 
         SendMessageToServer();
 
-        //if (ws != null && ws.ReadyState == WebSocketState.Open)
-        //{
-        //    var data = new
-        //    {
-        //        username = username,
-        //        score = score
-        //    };
-        //    string jsonData = JsonUtility.ToJson(data);
-        //    ws.Send(jsonData);
-        //}
+    }
+
+    public void RestartGame()
+    {
+        gameEnded = false;
+        //score = 0;
+        UpdateScoreText();
+        spawneador.RestartTime(); 
     }
 
     public void ChangeCursorType(int cursorIndex)
@@ -114,6 +128,7 @@ public class ControladorDeJuego : MonoBehaviour
                 break;
         }
     }
+
     private void ConnectToServer()
     {
         ws = new WebSocket(serverUrl);
@@ -134,14 +149,16 @@ public class ControladorDeJuego : MonoBehaviour
         if (!string.IsNullOrEmpty(usernameInputField.text))
         {
             string username = usernameInputField.text;
+
             if (ws != null && ws.ReadyState == WebSocketState.Open)
             {
+                Debug.Log("Sending message with username: " + username);
                 var data = new
                 {
                     username = username,
                     score = score
                 };
-                string jsonData = JsonUtility.ToJson(data);
+                string jsonData = "{\"username\": \"" + username + "\", \"Score\": \"" + score + "\"}";
                 ws.Send(jsonData);
             }
         }
@@ -154,12 +171,19 @@ public class ControladorDeJuego : MonoBehaviour
     private void OnMessageReceived(object sender, MessageEventArgs e)
     {
         Debug.Log("Received raw message: " + e.Data);
+
+        if (e.Data.Trim() == "{}")
+        {
+            Debug.LogError("Received an empty JSON object. Ignoring.");
+            return;
+        }
+
+        messageQueue.Enqueue(e.Data);
     }
 
     private void OnDisconnected(object sender, CloseEventArgs e)
     {
         Debug.Log("Disconnected from server");
-
     }
 
     public void DisconnectFromServer()

@@ -43,7 +43,7 @@ public class Juego : MonoBehaviour
     public void StartSpawning()
     {
         spawningStarted = true; 
-        gameTime = 5f;
+        gameTime = 15f;
         botonPlay.SetActive(false);
     }
 
@@ -64,5 +64,11 @@ public class Juego : MonoBehaviour
 
             Spawn();
         }
+    }
+    public void RestartTime()
+    {
+        spawningStarted = true;
+        gameTime = 15f;
+        botonPlay.SetActive(false);
     }
 }

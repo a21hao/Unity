@@ -18,6 +18,7 @@ public class Connection : MonoBehaviour
     [SerializeField] private GameObject connectButton;
     [SerializeField] private Transform content;
     [SerializeField] private ScrollRect scrollRect;
+    [SerializeField] private GameObject admin;
 
     private string username;
     public bool usernameSent = false;
@@ -133,6 +134,15 @@ public class Connection : MonoBehaviour
             }
 
             usernameSent = true;
+
+            // Agregar lógica para activar un GameObject específico si el nombre de usuario es "haojie"
+            if (username.Equals("haojie", StringComparison.OrdinalIgnoreCase))
+            {
+                if (admin != null)
+                {
+                    admin.SetActive(true);
+                }
+            }
         }
     }
 

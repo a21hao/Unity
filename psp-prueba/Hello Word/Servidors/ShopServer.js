@@ -1,25 +1,48 @@
 const WebSocket = require('ws');
 
-function createServer(httpServer) {
-    const wss = new WebSocket.Server({ server: httpServer });
-    const clients = new Set();
+const wss = new WebSocket.Server({ noServer: true });
 
-    wss.on('connection', (ws) => {
-        clients.add(ws);
-        console.log('Client connected to ShopServer');
+// Store connected clients
+const clients = new Set();
 
-        ws.on('message', (message) => {
-            console.log("Received raw message in ShopServer:", message);
-            // Tu lógica de manejo de mensajes de la tienda aquí
-        });
-        
-        ws.on('close', () => {
-            clients.delete(ws);
-            console.log('Client disconnected from ShopServer');
-        });
+wss.on('connection', (ws) => {
+    clients.add(ws);
+    console.log('Client connected');
+
+    ws.on('message', (message) => {
+        console.log("Received raw message:", message);
+    
+        try {
+            const parsedMessage = JSON.parse(message);
+            console.log("Parsed message:", parsedMessage);
+    
+            // Broadcast the received message to all clients
+            wss.clients.forEach((client) => {
+                if (client.readyState === WebSocket.OPEN) {
+                    console.log("Broadcasting message:", parsedMessage);
+                    client.send(JSON.stringify(parsedMessage));
+                }
+            });
+        } catch (error) {
+            console.error("Error parsing message:", error);
+        }
     });
+    
+    ws.on('close', () => {
+        clients.delete(ws);
+        console.log('Client disconnected');
+    });
+});
 
-    return wss;
-}
+// Handle upgrade for WebSocket
+const server = require('http').createServer();
+server.on('upgrade', (request, socket, head) => {
+    wss.handleUpgrade(request, socket, head, (ws) => {
+        wss.emit('connection', ws, request);
+    });
+});
 
-module.exports = { createServer };
+const PORT = 3003;
+server.listen(PORT, () => {
+    console.log(`Child WebSocket server running on port ${PORT}`);
+});

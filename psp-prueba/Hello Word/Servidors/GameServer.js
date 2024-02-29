@@ -15,6 +15,9 @@ wss.on('connection', (ws) => {
         try {
             const jsonData = JSON.parse(message);
             console.log("Received JSON data:", jsonData);
+
+            // Example: Broadcasting the received score data to all clients
+            wss.broadcastScore(jsonData);
         } catch (error) {
             console.error("Error parsing JSON:", error);
         }

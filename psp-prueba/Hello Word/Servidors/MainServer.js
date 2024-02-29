@@ -11,13 +11,13 @@ server.listen(PORT, () => {
     console.log(`Main server listening on port ${PORT}`);
     
     // Inicia el servidor de chat
-    startChildServer('ChatServer.js');
+    startChildServer('Servidors/ChatServer.js');
     
     // Inicia el servidor de juego
-    startChildServer('GameServer.js');
+    startChildServer('Servidors/GameServer.js');
 
     // Inicia el servidor de tienda
-    startChildServer('ShopServer.js');
+    startChildServer('Servidors/ShopServer.js');
 });
 
 let chatServer;
