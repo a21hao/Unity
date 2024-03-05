@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using WebSocketSharp;
 using System;
 using UnityEngine.UI;
+using System.Collections;
 
 public class CambiadorDeCursor : MonoBehaviour
 {
@@ -40,6 +41,7 @@ public class CambiadorDeCursor : MonoBehaviour
             int buttonIndex = i;
             cursorButtons[i].button.onClick.AddListener(() => CambiarCursor(buttonIndex));
         }
+        StartCoroutine(ReconnectRoutine());
     }
 
     private void Update()
@@ -169,6 +171,19 @@ public class CambiadorDeCursor : MonoBehaviour
         if (ws != null && ws.ReadyState == WebSocketState.Open)
         {
             ws.Close();
+        }
+    }
+    IEnumerator ReconnectRoutine()
+    {
+        while (true)
+        {
+            if (ws == null || ws.ReadyState != WebSocketState.Open)
+            {
+                Debug.Log("Attempting to reconnect to server...");
+                ConnectToServer();
+            }
+
+            yield return new WaitForSeconds(5f);
         }
     }
 }

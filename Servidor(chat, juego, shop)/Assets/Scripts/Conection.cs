@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System;
 using System.Text;
 using UnityEngine.UI;
+using System.Collections;
 
 public class Connection : MonoBehaviour
 {
@@ -43,6 +44,7 @@ public class Connection : MonoBehaviour
         usernameInput.onEndEdit.AddListener(delegate { SendUsername(); });
         messageInput.onSubmit.AddListener(delegate { SendMessageToServer(); });
         admin.SetActive(false);
+        StartCoroutine(ReconnectRoutine());
     }
 
     void Update()
@@ -190,6 +192,20 @@ public class Connection : MonoBehaviour
         if (ws != null && ws.ReadyState == WebSocketState.Open)
         {
             ws.Close();
+        }
+    }
+
+    IEnumerator ReconnectRoutine()
+    {
+        while (true)
+        {
+            if (ws == null || ws.ReadyState != WebSocketState.Open)
+            {
+                Debug.Log("Attempting to reconnect to server...");
+                ConnectToServer();
+            }
+
+            yield return new WaitForSeconds(5f);
         }
     }
 }

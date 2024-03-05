@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using WebSocketSharp;
 using System;
 using UnityEngine.UI;
+using System.Collections;
 
 public class ControladorDeJuego : MonoBehaviour
 {
@@ -29,6 +30,7 @@ public class ControladorDeJuego : MonoBehaviour
         spawneador = GetComponent<Juego>();
         UpdateScoreText();
         ConnectToServer();
+        StartCoroutine(ReconnectRoutine());
     }
 
     void Update()
@@ -199,6 +201,20 @@ public class ControladorDeJuego : MonoBehaviour
         if (ws != null && ws.ReadyState == WebSocketState.Open)
         {
             ws.Close();
+        }
+    }
+
+    IEnumerator ReconnectRoutine()
+    {
+        while (true)
+        {
+            if (ws == null || ws.ReadyState != WebSocketState.Open)
+            {
+                Debug.Log("Attempting to reconnect to server...");
+                ConnectToServer();
+            }
+
+            yield return new WaitForSeconds(5f);
         }
     }
 }

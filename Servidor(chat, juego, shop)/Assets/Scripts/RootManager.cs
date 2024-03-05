@@ -2,22 +2,19 @@ using UnityEngine;
 using WebSocketSharp;
 using System;
 using UnityEngine.UI;
+using UnityEngine.SocialPlatforms.Impl;
 
 public class RootManager : MonoBehaviour
 {
     private WebSocket ws;
     private string serverUrl = "ws://localhost:3000";
-    [SerializeField] private GameObject buttonChatStop;
-    [SerializeField] private GameObject buttonGameStop;
-    [SerializeField] private GameObject buttonShopStop;
+    [SerializeField] private Toggle toggleChatStop;
+    [SerializeField] private Toggle toggleGameStop;
+    [SerializeField] private Toggle toggleShopStop;
 
-    // Start is called before the first frame update
     void Start()
     {
         ConnectToServer();
-        buttonChatStop.GetComponent<Button>().onClick.AddListener(SendStopSignalToChatServer);
-        buttonGameStop.GetComponent<Button>().onClick.AddListener(SendStopSignalToGameServer);
-        buttonShopStop.GetComponent<Button>().onClick.AddListener(SendStopSignalToShopServer);
     }
 
     private void ConnectToServer()
@@ -38,8 +35,9 @@ public class RootManager : MonoBehaviour
     {
         if (ws != null && ws.ReadyState == WebSocketState.Open)
         {
-            string jsonData = "{\"server\": \"" + serverName + "\", \"signal\": \"" + signal + "\"}";
+            string jsonData = "{\"serverName\": \"" + serverName + "\", \"signal\": \"" + signal + "\"}";
             ws.Send(jsonData);
+            Debug.Log(serverName +signal);
         }
         else
         {
@@ -68,34 +66,21 @@ public class RootManager : MonoBehaviour
         }
     }
 
-    // Métodos para enviar señales específicas a los servidores hijos
-    public void SendStopSignalToChatServer()
+    public void ToggleChatServer()
     {
-        SendSignalToServer("chat", "stop");
+        string signal = toggleChatStop.isOn ? "stop" : "start";
+        SendSignalToServer("chat", signal);
     }
 
-    public void SendStartSignalToChatServer()
+    public void ToggleGameServer()
     {
-        SendSignalToServer("chat", "start");
+        string signal = toggleGameStop.isOn ? "stop" : "start";
+        SendSignalToServer("game", signal);
     }
 
-    public void SendStopSignalToGameServer()
+    public void ToggleShopServer()
     {
-        SendSignalToServer("game", "stop");
-    }
-
-    public void SendStartSignalToGameServer()
-    {
-        SendSignalToServer("game", "start");
-    }
-
-    public void SendStopSignalToShopServer()
-    {
-        SendSignalToServer("shop", "stop");
-    }
-
-    public void SendStartSignalToShopServer()
-    {
-        SendSignalToServer("shop", "start");
+        string signal = toggleShopStop.isOn ? "stop" : "start";
+        SendSignalToServer("shop", signal);
     }
 }

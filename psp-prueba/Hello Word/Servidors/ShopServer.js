@@ -37,4 +37,4 @@ wss.on('connection', function connection(ws) {
   });
 });
 
-console.log('WebSocket server running on port 3003');
+console.log('Child WebSocket server running on port 3003');

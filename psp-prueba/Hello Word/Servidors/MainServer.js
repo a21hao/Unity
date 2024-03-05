@@ -1,19 +1,22 @@
 const { spawn } = require('child_process');
 const http = require('http');
 const express = require('express');
+const WebSocket = require('ws');
 
 const app = express();
 const server = http.createServer(app);
+let wss;
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`Main server listening on port ${PORT}`);
     
     startChildServer('Servidors/ChatServer.js');
-    
     startChildServer('Servidors/GameServer.js');
-
     startChildServer('Servidors/ShopServer.js');
+
+    // Iniciar el servidor WebSocket una vez que los servidores hijos estén listos
+    startWebSocketServer();
 });
 
 let chatServer;
@@ -33,17 +36,22 @@ function startChildServer(serverScript) {
 
     serverInstance.on('close', (code) => {
         console.log(`Child process (${serverScript}) exited with code ${code}`);
+        // Reiniciar el servidor WebSocket cuando se detiene un servidor hijo
+        restartWebSocketServer();
     });
 
     switch (serverScript) {
-        case 'ChatServer.js':
+        case 'Servidors/ChatServer.js':
             chatServer = serverInstance;
+            console.log(`Chat server connected`);
             break;
-        case 'GameServer.js':
+        case 'Servidors/GameServer.js':
             gameServer = serverInstance;
+            console.log(`Game server connected`);
             break;
-        case 'ShopServer.js':
+        case 'Servidors/ShopServer.js':
             shopServer = serverInstance;
+            console.log(`Shop server connected`);
             break;
         default:
             console.error(`Unrecognized server script: ${serverScript}`);
@@ -51,9 +59,50 @@ function startChildServer(serverScript) {
     }
 }
 
-app.post('/stop/:serverName', (req, res) => {
-    const serverName = req.params.serverName;
+function startWebSocketServer() {
+    wss = new WebSocket.Server({ server });
 
+    wss.on('connection', (ws) => {
+        console.log('Client connected');
+      
+        ws.on('message', (message) => {
+            try {
+                const { serverName, signal } = JSON.parse(message);
+                console.log(`Received message from client: ${serverName} ${signal}`);
+
+                // Actuar según la señal recibida
+                switch (signal) {
+                    case 'stop':
+                        stopServer(serverName);
+                        break;
+                    case 'start':
+                        startServer(serverName);
+                        break;
+                    default:
+                        console.error(`Unrecognized signal: ${signal}`);
+                        break;
+                }
+            } catch (error) {
+                console.error('Error parsing JSON message:', error);
+            }
+        });
+
+        ws.on('close', () => {
+            console.log('Client disconnected');
+        });
+    });
+}
+
+function restartWebSocketServer() {
+    if (wss) {
+        wss.close(() => {
+            console.log('WebSocket server closed');
+            startWebSocketServer();
+        });
+    }
+}
+
+function stopServer(serverName) {
     let childServer;
     switch (serverName) {
         case 'chat':
@@ -66,28 +115,39 @@ app.post('/stop/:serverName', (req, res) => {
             childServer = shopServer;
             break;
         default:
-            return res.status(400).send('Server not found');
+            console.error(`Unrecognized server name: ${serverName}`);
+            return;
     }
 
     if (childServer) {
         console.log(`Stopping ${serverName} server...`);
         childServer.kill('SIGINT');
-        return res.send(`${serverName} server stopped.`);
     } else {
-        return res.status(400).send('Server not found');
+        console.error(`Server ${serverName} not found`);
     }
-});
+}
 
-process.on('SIGINT', () => {
-    console.log('Main process terminated. Closing child servers.');
-    if (chatServer) {
-        chatServer.kill('SIGINT');
+function startServer(serverName) {
+    let childServer;
+    switch (serverName) {
+        case 'chat':
+            childServer = chatServer;
+            break;
+        case 'game':
+            childServer = gameServer;
+            break;
+        case 'shop':
+            childServer = shopServer;
+            break;
+        default:
+            console.error(`Unrecognized server name: ${serverName}`);
+            return;
     }
-    if (gameServer) {
-        gameServer.kill('SIGINT');
+
+    if (!childServer) {
+        console.log(`Starting ${serverName} server...`);
+        startChildServer(`Servidors/${serverName.charAt(0).toUpperCase() + serverName.slice(1)}Server.js`);
+    } else {
+        console.error(`Server ${serverName} is already running`);
     }
-    if (shopServer) {
-        shopServer.kill('SIGINT');
-    }
-    process.exit();
-});
+}
