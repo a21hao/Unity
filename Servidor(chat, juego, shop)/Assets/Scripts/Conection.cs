@@ -25,6 +25,12 @@ public class Connection : MonoBehaviour
     public bool usernameSent = false;
     private Queue<string> receivedMessages = new Queue<string>();
     private bool newMessage = false;
+    private List<TextMeshProUGUI> chatMessages = new List<TextMeshProUGUI>();
+
+    private int transparencyState = 0;
+    private float semiTransparentAlpha = 0.5f;
+    private float fullyTransparentAlpha = 0f;
+    private float opaqueAlpha = 1f;
 
     [System.Serializable]
     public class Message
@@ -36,7 +42,7 @@ public class Connection : MonoBehaviour
         {
             return $"[{username}]: {message}";
         }
-    }   
+    }
 
     void Start()
     {
@@ -53,6 +59,11 @@ public class Connection : MonoBehaviour
         {
             CheckMessageQueue();
             newMessage = false;
+        }
+
+        if (Input.GetKeyDown(KeyCode.Tab))
+        {
+            CycleTransparency();
         }
     }
 
@@ -96,13 +107,14 @@ public class Connection : MonoBehaviour
 
     private void CheckMessageQueue()
     {
-        foreach (string message in receivedMessages)
+        while (receivedMessages.Count > 0)
         {
+            string message = receivedMessages.Dequeue();
             GameObject newText = Instantiate(chatTextPrefab, content);
-            newText.GetComponent<TextMeshProUGUI>().text = message;
+            TextMeshProUGUI tmp = newText.GetComponent<TextMeshProUGUI>();
+            tmp.text = message;
+            chatMessages.Add(tmp);
         }
-
-        receivedMessages.Clear();
 
         scrollRect.verticalNormalizedPosition = 0f;
     }
@@ -206,6 +218,35 @@ public class Connection : MonoBehaviour
             }
 
             yield return new WaitForSeconds(5f);
+        }
+    }
+
+    private void CycleTransparency()
+    {
+        transparencyState = (transparencyState + 1) % 3;
+
+        float alpha;
+        switch (transparencyState)
+        {
+            case 0:
+                alpha = opaqueAlpha;
+                break;
+            case 1:
+                alpha = semiTransparentAlpha;
+                break;
+            case 2:
+                alpha = fullyTransparentAlpha;
+                break;
+            default:
+                alpha = opaqueAlpha;
+                break;
+        }
+
+        foreach (var tmp in chatMessages)
+        {
+            Color color = tmp.color;
+            color.a = alpha;
+            tmp.color = color;
         }
     }
 }
